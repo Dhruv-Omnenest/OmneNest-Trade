@@ -26,8 +26,14 @@ const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use((config) => {
-    config.headers = { ...config.headers, ...getMiddlewareHeaders() } as any;
+    const middlewareHeaders = getMiddlewareHeaders();
+    const token = localStorage.getItem("accessToken");
+    config.headers = { 
+        ...config.headers, 
+        ...middlewareHeaders,
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+    } as any;
+
     return config;
 });
-
 export default apiClient;

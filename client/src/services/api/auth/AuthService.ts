@@ -27,17 +27,17 @@ export const loginUser = async (username: string, password: string) => {
 };
 export const validateOtp = async (username: string, otp: number) => {
     try {
-        const payload = {
-            username: username,
-            otp: otp
-        };
+        const payload = { username, otp };
         const response = await apiClient.post('/v2/api/auth/validate-otp', payload);
+        
+    
+        const token = response.data.jwtTokens.accessToken;
+        
+        localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify(response.data));
+
         return response.data;
     } catch (error: any) {
-        if (error.response) {
-            console.error("OTP Validation Error:", error.response.data);
-        }
         throw error;
     }
 };
-
