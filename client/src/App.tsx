@@ -6,9 +6,18 @@ import { PortfolioPage } from "@/features/portfolio-overview/PortfolioPage";
 import { OrderBookPage } from "@/features/order-book/OrderBookPage";
 import { WatchlistPage } from "@/features/dashboard/WatchlistPage";
 import { useUIStore } from "@/store/ui.store";
+import { useAuthStore } from "@/store/auth.store"; 
+import { SplashScreen } from "@/pages/SplashScreen";
 
 export default function App() {
-  // Starts WebSocket connection — runs once on mount
+  const isHandshakeDone = useAuthStore((s) => s.isHandshakeDone);
+  if (!isHandshakeDone) {
+    return <SplashScreen />;
+  }
+  return <MainContent />;
+}
+
+function MainContent() {
   useWebSocket();
 
   const activeTab = useUIStore((s) => s.activeTab);
@@ -31,12 +40,10 @@ export default function App() {
     }}>
       <Header />
 
-      {/* Tab content */}
       <main style={{ flex: 1, display: "flex", overflow: "hidden", position: "relative" }}>
         {renderTab()}
       </main>
 
-      {/* Footer */}
       <footer style={{
         padding: "4px 20px",
         borderTop: "1px solid var(--border)",
@@ -46,8 +53,8 @@ export default function App() {
         fontFamily: "var(--font-mono)", letterSpacing: "0.5px",
         flexShrink: 0,
       }}>
-        <span>ws://localhost:8080</span>
-        <span>Groww-915 · Simulated data — for learning only</span>
+        <span>HANDSHAKE: SUCCESS</span>
+        <span>© 2026 Omnenest Technologies Pvt Ltd</span>
       </footer>
 
       <NotificationStack />
