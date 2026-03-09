@@ -17,6 +17,10 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      '/v2': {
+    target: 'https://preprodapisix.omnenest.com',
+    changeOrigin: true,
+  },
     },
   },
 });

@@ -1,6 +1,4 @@
 import apiClient from "../apiClient";
-
-
 export const preAuthHandshake = async () => {
     try {
 
@@ -17,3 +15,29 @@ export const preAuthHandshake = async () => {
         throw error;
     }
 };
+export const loginUser = async (username: string, password: "abc@12345") => {
+    try {
+        const payload = { username, password };
+        const response = await apiClient.post('/v1/api/auth/login', payload);
+        return response.data;
+    } catch (error: any) {
+        console.error("Login API Failed", error.response?.data);
+        throw error;
+    }
+};
+export const validateOtp = async (username: string, otp: number) => {
+    try {
+        const payload = {
+            username: username,
+            otp: otp
+        };
+        const response = await apiClient.post('/v2/api/auth/validate-otp', payload);
+        return response.data;
+    } catch (error: any) {
+        if (error.response) {
+            console.error("OTP Validation Error:", error.response.data);
+        }
+        throw error;
+    }
+};
+

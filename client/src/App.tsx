@@ -8,12 +8,20 @@ import { WatchlistPage } from "@/features/dashboard/WatchlistPage";
 import { useUIStore } from "@/store/ui.store";
 import { useAuthStore } from "@/store/auth.store"; 
 import { SplashScreen } from "@/pages/SplashScreen";
+import { LoginPage } from "./pages/LoginPage";
+import { useEffect } from "react";
+
 
 export default function App() {
-  const isHandshakeDone = useAuthStore((s) => s.isHandshakeDone);
-  if (!isHandshakeDone) {
-    return <SplashScreen />;
-  }
+  const { isHandshakeDone, isLoggedIn } = useAuthStore();
+
+  useEffect(() => {
+    console.log("AUTH STATE CHANGED:", { isHandshakeDone, isLoggedIn });
+  }, [isHandshakeDone, isLoggedIn]);
+
+  if (!isHandshakeDone) return <SplashScreen />;
+  if (!isLoggedIn) return <LoginPage />;
+  
   return <MainContent />;
 }
 
