@@ -1,84 +1,83 @@
-import { memo } from "react";
-import { useMarketStore } from "@/store";
-import { useUIStore } from "@/store";
+import { memo, useEffect } from "react";
+import { useUIStore, useMarketStore } from "@/store"; // Importing from barrel index
+import { DashBoardConfig } from "@/services/api/dashboard/DashBoardConfig";
 
 export const Header = memo(function Header() {
-  const isConnected = useMarketStore((s) => s.isConnected);
-  const tickCount   = useMarketStore((s) => s.tickCount);
-  const activeTab   = useUIStore((s) => s.activeTab);
+  // Selectors
+  const tabs = useUIStore((s) => s.tabs) || [];
+  const activeTab = useUIStore((s) => s.activeTab);
   const setActiveTab = useUIStore((s) => s.setActiveTab);
+  const setTabs = useUIStore((s) => s.setTabs);
+  const setLoadingConfig = useUIStore((s) => s.setLoadingConfig);
+  
+  const isConnected = useMarketStore((s) => s.isConnected);
 
-  const tabs: Array<{ id: typeof activeTab; label: string }> = [
-    { id: "dashboard",  label: "Market" },
-    { id: "portfolio",  label: "Portfolio" },
-    { id: "orderbook",  label: "Order Book" },
-    { id: "watchlist",  label: "Watchlist" },
-  ];
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const data = await DashBoardConfig();
+        // Accessing the nested structure from your JSON
+        const features = data?.dashboard?.features || [];
+        setTabs(features);
+        
+        // Auto-select first tab if none is active
+        if (features.length > 0 && !activeTab) {
+          const firstTabId = features[0].name.toLowerCase().replace(/\s+/g, '-');
+          setActiveTab(firstTabId);
+        }
+      } catch (err) {
+        console.error("Header Config Load Failed", err);
+      } finally {
+        setLoadingConfig(false);
+      }
+    };
+    
+    fetchConfig();
+  }, [setTabs, setActiveTab, setLoadingConfig, activeTab]);
 
   return (
-    <header style={{
-      display: "flex", alignItems: "center", justifyContent: "space-between",
-      padding: "0 24px", height: "52px",
-      background: "var(--bg-panel)",
-      borderBottom: "1px solid var(--border)",
-      flexShrink: 0,
-      gap: "24px",
+    <header style={{ 
+      display: "flex", alignItems: "center", height: "52px", 
+      padding: "0 24px", background: "var(--bg-panel)", borderBottom: "1px solid var(--border)",
+      flexShrink: 0
     }}>
-      {/* Logo */}
-      <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
-        <span style={{
-          fontFamily: "var(--font-display)", fontSize: "20px",
-          fontWeight: "800", color: "var(--green)", letterSpacing: "-0.5px",
-        }}>
-          groww
-        </span>
-        <span style={{
-          fontSize: "9px", color: "var(--text-muted)",
-          letterSpacing: "2px", fontFamily: "var(--font-mono)",
-        }}>
-          915
-        </span>
+      <div style={{ fontWeight: "800", color: "var(--green)", marginRight: "24px", fontSize: "20px" }}>
+        groww
       </div>
 
-      {/* Nav tabs */}
-      <nav style={{ display: "flex", gap: "4px", flex: 1 }}>
-        {tabs.map((t) => (
-          <button key={t.id} onClick={() => setActiveTab(t.id)} style={{
-            background: activeTab === t.id ? "var(--bg-elevated)" : "none",
-            border: activeTab === t.id ? "1px solid var(--border)" : "1px solid transparent",
-            color: activeTab === t.id ? "var(--text-primary)" : "var(--text-muted)",
-            borderRadius: "var(--radius)",
-            padding: "5px 14px",
-            fontFamily: "var(--font-mono)", fontSize: "11px", fontWeight: "500",
-            cursor: "pointer", letterSpacing: "0.5px",
-            transition: "all 0.15s ease",
-          }}>
-            {t.label}
-          </button>
-        ))}
+      <nav style={{ display: "flex", gap: "8px", flex: 1 }}>
+        {tabs.map((tab) => {
+          const id = tab.name.toLowerCase().replace(/\s+/g, '-');
+          const isActive = activeTab === id;
+          
+          return (
+            <button
+              key={id}
+              onClick={() => setActiveTab(id)}
+              style={{
+                background: isActive ? "var(--bg-elevated)" : "transparent",
+                color: isActive ? "var(--text-primary)" : "var(--text-muted)",
+                border: isActive ? "1px solid var(--border)" : "1px solid transparent",
+                padding: "6px 14px", cursor: "pointer",
+                borderRadius: "4px", fontSize: "11px", fontWeight: "500",
+                transition: "all 0.2s"
+              }}
+            >
+              {tab.name}
+            </button>
+          );
+        })}
       </nav>
-
-      {/* Status */}
-      <div style={{ display: "flex", alignItems: "center", gap: "16px", flexShrink: 0 }}>
-        {tickCount > 0 && (
-          <span style={{ fontSize: "10px", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
-            {tickCount.toLocaleString()} ticks
-          </span>
-        )}
-        <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
-          <div className={isConnected ? "pulse" : ""} style={{
-            width: "7px", height: "7px", borderRadius: "50%",
-            background: isConnected ? "var(--green)" : "var(--red)",
-            boxShadow: isConnected ? "0 0 6px var(--green)" : "none",
-          }} />
-          <span style={{
-            fontSize: "10px", fontWeight: "600", letterSpacing: "1px",
-            color: isConnected ? "var(--green)" : "var(--red)",
-            fontFamily: "var(--font-mono)",
-          }}>
-            {isConnected ? "LIVE" : "OFFLINE"}
-          </span>
-        </div>
+      
+      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <div style={{
+          width: "8px", height: "8px", borderRadius: "50%",
+          background: isConnected ? "var(--green)" : "var(--red)",
+          boxShadow: isConnected ? "0 0 8px var(--green)" : "none"
+        }} />
+        <span style={{ fontSize: "10px", fontWeight: "600", color: isConnected ? "var(--green)" : "var(--red)" }}>
+          {isConnected ? "LIVE" : "OFFLINE"}
+        </span>
       </div>
     </header>
   );

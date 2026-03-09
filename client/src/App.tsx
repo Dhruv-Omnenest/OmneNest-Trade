@@ -4,20 +4,24 @@ import { NotificationStack } from "@/shared/components/NotificationStack";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { PortfolioPage } from "@/features/portfolio-overview/PortfolioPage";
 import { OrderBookPage } from "@/features/order-book/OrderBookPage";
-import { WatchlistPage } from "@/features/dashboard/WatchlistPage";
 import { useUIStore } from "@/store/ui.store";
 import { useAuthStore } from "@/store/auth.store"; 
 import { SplashScreen } from "@/pages/SplashScreen";
 import { LoginPage } from "./pages/LoginPage";
-import { useEffect } from "react";
+import WatchlistPage from "./pages/WatchListPage";
 
+const TAB_REGISTRY: Record<string, React.ReactNode> = {
+  "indices": <DashboardPage />,
+  "fund-summary": <PortfolioPage />,
+  "holdings": <PortfolioPage />,
+  "order-and-positions-summary": <OrderBookPage />,
+  "watchlist": <WatchlistPage />,
+  "market-movers": <DashboardPage />, 
+  "market-news": <DashboardPage />   
+};
 
 export default function App() {
   const { isHandshakeDone, isLoggedIn } = useAuthStore();
-
-  useEffect(() => {
-    console.log("AUTH STATE CHANGED:", { isHandshakeDone, isLoggedIn });
-  }, [isHandshakeDone, isLoggedIn]);
 
   if (!isHandshakeDone) return <SplashScreen />;
   if (!isLoggedIn) return <LoginPage />;
@@ -27,18 +31,11 @@ export default function App() {
 
 function MainContent() {
   useWebSocket();
-
   const activeTab = useUIStore((s) => s.activeTab);
+  const isLoading = useUIStore((s) => s.isLoadingConfig);
 
-  const renderTab = () => {
-    switch (activeTab) {
-      case "dashboard":  return <DashboardPage />;
-      case "portfolio":  return <PortfolioPage />;
-      case "orderbook":  return <OrderBookPage />;
-      case "watchlist":  return <WatchlistPage />;
-      default:           return <DashboardPage />;
-    }
-  };
+  // Fallback to Dashboard if the slug isn't in our registry
+  const currentView = TAB_REGISTRY[activeTab] || <DashboardPage />;
 
   return (
     <div style={{
@@ -49,16 +46,17 @@ function MainContent() {
       <Header />
 
       <main style={{ flex: 1, display: "flex", overflow: "hidden", position: "relative" }}>
-        {renderTab()}
+        {isLoading ? (
+          <div style={{ margin: "auto", color: "var(--text-muted)" }}>Initializing Workspace...</div>
+        ) : (
+          currentView
+        )}
       </main>
 
       <footer style={{
-        padding: "4px 20px",
-        borderTop: "1px solid var(--border)",
-        background: "var(--bg-panel)",
-        display: "flex", justifyContent: "space-between",
-        fontSize: "9px", color: "var(--text-muted)",
-        fontFamily: "var(--font-mono)", letterSpacing: "0.5px",
+        padding: "4px 20px", borderTop: "1px solid var(--border)",
+        background: "var(--bg-panel)", display: "flex", justifyContent: "space-between",
+        fontSize: "9px", color: "var(--text-muted)", fontFamily: "var(--font-mono)",
         flexShrink: 0,
       }}>
         <span>HANDSHAKE: SUCCESS</span>

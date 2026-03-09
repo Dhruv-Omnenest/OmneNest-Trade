@@ -33,7 +33,7 @@ export const validateOtp = async (username: string, otp: number) => {
     
         const token = response.data.jwtTokens.accessToken;
         
-        localStorage.setItem("token", token);
+        localStorage.setItem("accessToken", token);
         localStorage.setItem("user", JSON.stringify(response.data));
 
         return response.data;
