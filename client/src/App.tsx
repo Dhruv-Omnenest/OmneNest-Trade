@@ -9,15 +9,18 @@ import { useAuthStore } from "@/store/auth.store";
 import { SplashScreen } from "@/pages/SplashScreen";
 import { LoginPage } from "./pages/LoginPage";
 import WatchlistPage from "./pages/WatchListPage";
+import NewsPage from "./pages/NewsPage";
+import IndexPage from "./pages/IndexPage";
+import FundsPage from "./pages/FundsPage";
 
 const TAB_REGISTRY: Record<string, React.ReactNode> = {
-  "indices": <DashboardPage />,
-  "fund-summary": <PortfolioPage />,
+  "indices": <IndexPage />,
+  "fund-summary": <FundsPage />,
   "holdings": <PortfolioPage />,
   "order-and-positions-summary": <OrderBookPage />,
   "watchlist": <WatchlistPage />,
   "market-movers": <DashboardPage />, 
-  "market-news": <DashboardPage />   
+  "market-news": <NewsPage />   
 };
 
 export default function App() {
