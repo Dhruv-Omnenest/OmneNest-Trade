@@ -1,26 +1,35 @@
-
 import React, { useState } from "react";
 import { useAuthStore } from "@/store/auth.store";
 import { useUIStore } from "@/store/ui.store";
 import { loginUser, validateOtp } from "@/services/api/auth/AuthService";
 
 export const LoginPage: React.FC = () => {
+  // Store selectors
   const isPasswordDone = useAuthStore((s) => s.isPasswordDone);
   const setPasswordSuccess = useAuthStore((s) => s.setPasswordSuccess);
   const setLoginSuccess = useAuthStore((s) => s.setLoginSuccess);
-  
   const pushNotification = useUIStore((s) => s.pushNotification);
 
+  // Local State
+  const [username, setUsername] = useState("AMITH1"); // Initialized with your test user
+  const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handlePasswordLogin = async () => {
+  const handlePasswordLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!username || !password) {
+      pushNotification("Please enter both credentials", "error");
+      return;
+    }
+
     setLoading(true);
     try {
-      const response = await loginUser("AMITH1", "abc@12345");
+      // Now passing dynamic values from our inputs
+      const response = await loginUser(username, password);
       console.log("Login successful:", response);
-      setPasswordSuccess(); 
       
+      setPasswordSuccess(); // Transition to OTP view
       pushNotification("Password Verified. Enter OTP", "success");
     } catch (err) {
       console.error("Login Error:", err);
@@ -30,14 +39,15 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const handleOtpVerify = async () => {
+  const handleOtpVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (otp !== "1234") {
       pushNotification("Invalid Security Code", "error");
       return;
     }
     setLoading(true);
     try {
-      const data = await validateOtp("AMITH1", 1234);
+      const data = await validateOtp(username, parseInt(otp));
       setLoginSuccess(data);
       pushNotification("Access Granted", "success");
     } catch (err) {
@@ -52,53 +62,90 @@ export const LoginPage: React.FC = () => {
       <div style={loginStyles.card}>
         <div style={loginStyles.header}>
           <h2 style={loginStyles.title}>
-            {!isPasswordDone ? "System Login" : "Operator Auth"}
+            {!isPasswordDone ? "SYSTEM LOGIN" : "OPERATOR AUTH"}
           </h2>
-          <p style={loginStyles.id}>ID: AMITH1</p>
+          <p style={loginStyles.id}>NODE_ID: {username || "UNKNOWN"}</p>
         </div>
 
         {!isPasswordDone ? (
-          <div key="password-view">
-            <div style={loginStyles.infoBox}>User: AMITH1 <br/> Pass: abc@12345</div>
+          <form onSubmit={handlePasswordLogin}>
+            <input
+              type="text"
+              placeholder="USERNAME"
+              value={username}
+              onChange={(e) => setUsername(e.target.value.toUpperCase())}
+              style={loginStyles.input}
+              disabled={loading}
+            />
+            <input
+              type="password"
+              placeholder="PASSWORD"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={loginStyles.input}
+              disabled={loading}
+            />
             <button 
-              onClick={handlePasswordLogin} 
+              type="submit"
               disabled={loading} 
               style={{...loginStyles.button, cursor: loading ? "not-allowed" : "pointer"}}
             >
               {loading ? "AUTHENTICATING..." : "VERIFY PASSWORD"}
             </button>
-          </div>
+          </form>
         ) : (
-          <div key="otp-view">
+          <form onSubmit={handleOtpVerify}>
             <input
-              type="password"
+              type="text"
               maxLength={4}
               placeholder="ENTER OTP"
               value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              style={loginStyles.input}
+              onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+              style={{...loginStyles.input, color: "#00ff00", letterSpacing: "10px"}}
               autoFocus
+              disabled={loading}
             />
             <button 
-              onClick={handleOtpVerify} 
+              type="submit"
               disabled={loading} 
               style={{...loginStyles.button, cursor: loading ? "not-allowed" : "pointer"}}
             >
               {loading ? "VALIDATING..." : "VERIFY SESSION"}
             </button>
-          </div>
+          </form>
         )}
       </div>
     </div>
   );
 };
+
 const loginStyles = {
   container: { height: "100vh", display: "flex", justifyContent: "center", alignItems: "center", background: "#000" },
-  card: { width: "320px", padding: "30px", border: "1px solid #333", background: "#0a0a0a", textAlign: "center" as const },
+  card: { width: "350px", padding: "40px", border: "1px solid #333", background: "#0a0a0a", textAlign: "center" as const },
   header: { marginBottom: "30px" },
-  title: { color: "#fff", letterSpacing: "2px", fontSize: "18px", margin: 0 },
-  id: { color: "#666", fontSize: "10px", marginTop: "5px", fontFamily: "monospace" },
-  infoBox: { background: "#111", padding: "10px", color: "#555", fontSize: "11px", marginBottom: "20px", border: "1px dashed #222" },
-  input: { width: "100%", padding: "15px", background: "#111", border: "1px solid #222", color: "#00ff00", textAlign: "center" as const, fontSize: "20px", letterSpacing: "10px", outline: "none", marginBottom: "20px" },
-  button: { width: "100%", padding: "12px", background: "#fff", color: "#000", fontWeight: "bold", border: "none", cursor: "pointer", fontSize: "12px", letterSpacing: "1px" }
+  title: { color: "#fff", letterSpacing: "3px", fontSize: "16px", margin: 0, fontWeight: "bold" },
+  id: { color: "#444", fontSize: "10px", marginTop: "8px", fontFamily: "monospace" },
+  input: { 
+    width: "100%", 
+    padding: "12px", 
+    background: "#111", 
+    border: "1px solid #222", 
+    color: "#eee", 
+    fontSize: "14px", 
+    outline: "none", 
+    marginBottom: "15px",
+    boxSizing: "border-box" as const,
+    fontFamily: "monospace"
+  },
+  button: { 
+    width: "100%", 
+    padding: "12px", 
+    background: "#fff", 
+    color: "#000", 
+    fontWeight: "bold" as const, 
+    border: "none", 
+    fontSize: "12px", 
+    letterSpacing: "1px",
+    marginTop: "10px"
+  }
 };

@@ -15,7 +15,7 @@ export const preAuthHandshake = async () => {
         throw error;
     }
 };
-export const loginUser = async (username: string, password: "abc@12345") => {
+export const loginUser = async (username: string, password: string) => {
     try {
         const payload = { username, password };
         const response = await apiClient.post('/v1/api/auth/login', payload);
