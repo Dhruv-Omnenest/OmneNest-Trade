@@ -7,11 +7,18 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+*.properties
+
+
 node_modules
 dist
 dist-ssr
 *.local
-
+# --- SonarCloud & Testing (Added for your workflow) ---
+.scannerwork/
+coverage/
+junit.xml
+# ------------------------------------------------------
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
