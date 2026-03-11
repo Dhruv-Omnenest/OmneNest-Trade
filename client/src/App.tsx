@@ -1,4 +1,10 @@
+import { useMemo } from "react";
 import { useWebSocket } from "@/shared/hooks/useWebSocket";
+// ★ NEW IMPORTS
+import { useLiveMarketWs } from "@/shared/hooks/useLiveMarketWs";
+import { WsStatusBadge } from "@/shared/components/WsStatusBadge";
+import { wsManager } from "@/services/websocket";
+
 import { Header } from "@/shared/components/Header";
 import { NotificationStack } from "@/shared/components/NotificationStack";
 import { DashboardPage } from "@/pages/DashboardPage";
@@ -12,6 +18,17 @@ import WatchlistPage from "./pages/WatchListPage";
 import NewsPage from "./pages/NewsPage";
 import IndexPage from "./pages/IndexPage";
 import FundsPage from "./pages/FundsPage";
+
+// Helper to extract clientCode from the token
+function getClientCodeFromToken(token: string | null): string {
+  if (!token) return "";
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return (payload.clientCode ?? payload.sub ?? "") as string;
+  } catch {
+    return localStorage.getItem("client_code") ?? "";
+  }
+}
 
 const TAB_REGISTRY: Record<string, React.ReactNode> = {
   "indices": <IndexPage />,
@@ -33,11 +50,24 @@ export default function App() {
 }
 
 function MainContent() {
-  useWebSocket();
+  // 1. Get client code (memoized to prevent hook re-triggers)
+  const clientCode = useMemo(() => {
+    const token = localStorage.getItem("bearer_token");
+    return getClientCodeFromToken(token);
+  }, []);
+
+  // 2. Initialize both WebSockets
+  useWebSocket(); // Simulated/Internal
+  useLiveMarketWs({
+    clientCode,
+    extraSubscriptions: [
+      { exchange: "NSE_CM", tokens: ["11377"] }, // Example: HDFCBANK
+    ],
+  });
+
   const activeTab = useUIStore((s) => s.activeTab);
   const isLoading = useUIStore((s) => s.isLoadingConfig);
 
-  // Fallback to Dashboard if the slug isn't in our registry
   const currentView = TAB_REGISTRY[activeTab] || <DashboardPage />;
 
   return (
@@ -59,11 +89,24 @@ function MainContent() {
       <footer style={{
         padding: "4px 20px", borderTop: "1px solid var(--border)",
         background: "var(--bg-panel)", display: "flex", justifyContent: "space-between",
+        alignItems: "center", // Added for vertical alignment with badge
         fontSize: "9px", color: "var(--text-muted)", fontFamily: "var(--font-mono)",
         flexShrink: 0,
       }}>
-        <span>HANDSHAKE: SUCCESS</span>
-        <span>© 2026 Omnenest Technologies Pvt Ltd</span>
+        <div style={{ display: "flex", gap: "16px" }}>
+          <span>HANDSHAKE: SUCCESS</span>
+          <span style={{ opacity: 0.5 }}>|</span>
+          <span>LIVE MARKET: wss://preprodapisix.omnenest.com</span>
+        </div>
+
+        {/* 3. Integrated Status Badge */}
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <span>© 2026 Omnenest Technologies Pvt Ltd</span>
+          <WsStatusBadge 
+            showRetry 
+            onRetry={() => wsManager.connect(clientCode)} 
+          />
+        </div>
       </footer>
 
       <NotificationStack />
